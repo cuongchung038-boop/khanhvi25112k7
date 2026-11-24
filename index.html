@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Happy Birthday Trần Nguyễn Khánh Vi</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:wght@600;700;800&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body, html {
+      width: 100%; height: 100%; overflow: hidden;
+      background: radial-gradient(circle at 50% 48%, #470613 0%, #1f0107 55%, #070002 100%);
+      font-family: 'Montserrat', sans-serif; color: #fff;
+    }
+
+    /* Màn hình chờ mở thiệp */
+    #welcome-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: radial-gradient(circle at center, rgba(72, 6, 20, 0.97) 0%, rgba(14, 1, 4, 0.99) 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 24px; cursor: pointer; transition: opacity 0.4s ease;
+    }
+    .gift-pulse { font-size: 68px; margin-bottom: 12px; filter: drop-shadow(0 0 22px rgba(255,215,0,0.9)); animation: bounce 1.6s infinite; }
+    @keyframes bounce { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-10px) scale(1.08); } }
+    .welcome-title {
+      font-family: 'Great Vibes', cursive; font-size: clamp(2.6rem, 6vw, 4rem);
+      background: linear-gradient(180deg, #fff9c4 0%, #ffd700 50%, #ff9900 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px;
+    }
+    .welcome-name { font-size: clamp(1.1rem, 3vw, 1.5rem); font-weight: 700; color: #ffe8a3; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 24px; }
+    .open-btn {
+      padding: 14px 36px; border-radius: 999px; border: 2px solid #fff3a8;
+      background: linear-gradient(135deg, #ffd700 0%, #e08e00 100%); color: #2b0208;
+      font-size: 16px; font-weight: 700; box-shadow: 0 0 28px rgba(255,215,0,0.8); cursor: pointer;
+    }
+
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    #bg-canvas { z-index: 1; }
+    #fireworks-canvas { z-index: 3; mix-blend-mode: screen; }
+
+    /* Dây đèn trang trí phía trên */
+    .garland-top { position: fixed; top: 0; left: 0; width: 100%; height: 110px; z-index: 4; pointer-events: none; }
+    .bulb-glow { animation: bulbPulse 1.8s ease-in-out infinite alternate; }
+    .bulb-glow:nth-child(even) { animation-delay: 0.9s; }
+    @keyframes bulbPulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
+
+    /* Tiêu đề */
+    .header-banner { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); z-index: 20; text-align: center; pointer-events: none; width: 92%; }
+    .title-script {
+      font-family: 'Great Vibes', cursive; font-size: clamp(2.6rem, 6vw, 4.4rem); line-height: 1.05;
+      background: linear-gradient(180deg, #fff9c4 0%, #ffd700 40%, #ff9900 80%, #fff099 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 3px 14px rgba(255,165,0,0.75));
+    }
+    .subtitle-name {
+      font-size: clamp(0.95rem, 2.4vw, 1.4rem); font-weight: 700; color: #ffe89e;
+      text-shadow: 0 0 12px rgba(255,60,100,0.9), 0 2px 6px #000; letter-spacing: 2.5px;
+      text-transform: uppercase; margin-top: 6px; padding: 4px 18px; border-radius: 20px;
+      display: inline-block; background: rgba(90,5,20,0.55); border: 1px solid rgba(255,215,0,0.5);
+    }
+
+    /* Bánh kem 3 tầng lớn đặt ở chính giữa phía sau */
+    .cake-backdrop {
+      position: fixed; bottom: -6px; left: 50%; transform: translateX(-50%);
+      width: min(500px, 66vw); height: min(430px, 53vh);
+      z-index: 6; pointer-events: none; opacity: 0.95;
+      filter: drop-shadow(0 0 38px rgba(255, 205, 70, 0.65));
+    }
+    @media (max-width: 640px) {
+      .cake-backdrop { width: 84vw; height: 42vh; }
+    }
+
+    /* Bong bóng 2 bên: z-index 5 (nằm sau hộp quà z-index 8 để giấu đầu dây) */
+    .decor-side { position: fixed; top: 0; bottom: 0; width: 230px; z-index: 5; pointer-events: none; }
+    .decor-left { left: -6px; }
+    .decor-right { right: -6px; transform: scaleX(-1); }
+    @media (max-width: 768px) { .decor-side { width: 130px; opacity: 0.9; } }
+    .balloon-float { animation: sway 5s ease-in-out infinite alternate; transform-origin: 85px 600px; }
+    @keyframes sway { 0% { transform: rotate(-2deg); } 100% { transform: rotate(2.2deg); } }
+
+    /* 2 cụm hộp quà lớn và rực sáng ở 2 góc dưới: z-index 8 (che gọn phần đầu dây bong bóng) */
+    .gifts-corner {
+      position: fixed; bottom: -6px; z-index: 8; pointer-events: none;
+      width: min(320px, 34vw); height: min(240px, 28vh);
+      animation: giftBright 2.8s ease-in-out infinite alternate;
+    }
+    .gifts-left { left: 2px; }
+    .gifts-right { right: 2px; transform: scaleX(-1); }
+    @media (max-width: 640px) { .gifts-corner { width: 175px; height: 132px; } }
+    @keyframes giftBright {
+      0% { filter: drop-shadow(0 0 18px rgba(255, 200, 40, 0.7)) brightness(1.05); }
+      100% { filter: drop-shadow(0 0 36px rgba(255, 235, 110, 1)) brightness(1.22); }
+    }
+
+    /* Sân khấu 3D */
+    .stage-3d { position: fixed; inset: 0; z-index: 10; perspective: 1150px; display: flex; align-items: center; justify-content: center; }
+    .world-3d { position: relative; width: 0; height: 0; transform-style: preserve-3d; }
+    .photo-card {
+      position: absolute; width: 172px; height: 220px; margin-left: -86px; margin-top: -110px;
+      border-radius: 14px; padding: 6px;
+      background: linear-gradient(135deg, #fff3a1 0%, #ffd700 30%, #b86b00 60%, #ffe680 100%);
+      box-shadow: 0 12px 35px rgba(0,0,0,0.75), 0 0 22px rgba(255,200,50,0.55);
+      transform-style: preserve-3d; cursor: pointer;
+    }
+    @media (max-width: 640px) { .photo-card { width: 126px; height: 164px; margin-left: -63px; margin-top: -82px; } }
+    .photo-inner { width: 100%; height: 100%; border-radius: 10px; overflow: hidden; position: relative; background: #230309; }
+    .photo-inner img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .card-caption {
+      position: absolute; bottom: 0; left: 0; right: 0; padding: 18px 6px 6px;
+      background: linear-gradient(to top, rgba(35,2,10,0.92), transparent);
+      color: #ffe8a3; font-size: 11px; font-weight: 600; text-align: center;
+    }
+
+    /* Thiệp chúc 3D */
+    .wish-card-inner {
+      width: 100%; height: 100%; border-radius: 10px;
+      background: radial-gradient(circle at 50% 25%, #7a0922 0%, #3d0210 65%, #1f0007 100%);
+      border: 1.5px solid rgba(255,215,0,0.65); padding: 10px 8px;
+      display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; position: relative;
+    }
+    .wish-card-inner::before { content: ''; position: absolute; inset: 4px; border-radius: 7px; border: 1px dashed rgba(255,225,130,0.45); }
+    .wc-tag { font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #ffd700; }
+    .wc-icon { font-size: 32px; line-height: 1.1; }
+    .wc-text { font-size: 12px; font-weight: 600; color: #fff6d6; line-height: 1.35; padding: 0 3px; }
+    .wc-footer { font-size: 9px; color: rgba(255,215,120,0.8); }
+    @media (max-width: 640px) { .wc-tag { font-size: 8px; } .wc-icon { font-size: 24px; } .wc-text { font-size: 10px; } }
+  </style>
+</head>
+<body>
+
+  <div id="welcome-overlay" onclick="openCard()">
+    <div class="gift-pulse">🎁</div>
+    <div class="welcome-title">Happy Birthday</div>
+    <div class="welcome-name">Trần Nguyễn Khánh Vi</div>
+    <button type="button" class="open-btn">Chạm để mở thiệp ✨</button>
+  </div>
+
+  <audio id="bg-music" loop preload="auto">
+    <source src="nhac.mp3" type="audio/mpeg" />
+    <source src="nhac.m4a" type="audio/mp4" />
+  </audio>
+
+  <canvas id="bg-canvas"></canvas>
+  <canvas id="fireworks-canvas"></canvas>
+
+  <!-- Dây đèn trang trí góc trên -->
+  <svg class="garland-top" viewBox="0 0 1200 120" preserveAspectRatio="none" fill="none">
+    <path d="M-10 10 Q220 95 450 5 M750 5 Q980 95 1210 10" stroke="rgba(255,215,100,0.65)" stroke-width="2.2"/>
+    <circle class="bulb-glow" cx="90" cy="36" r="5.5" fill="#ffd700"/>
+    <circle class="bulb-glow" cx="185" cy="52" r="6.5" fill="#ff4d6d"/>
+    <circle class="bulb-glow" cx="285" cy="48" r="5.5" fill="#fff3b0"/>
+    <circle class="bulb-glow" cx="375" cy="28" r="5.5" fill="#ffd700"/>
+    <circle class="bulb-glow" cx="825" cy="28" r="5.5" fill="#ffd700"/>
+    <circle class="bulb-glow" cx="915" cy="48" r="5.5" fill="#fff3b0"/>
+    <circle class="bulb-glow" cx="1015" cy="52" r="6.5" fill="#ff4d6d"/>
+    <circle class="bulb-glow" cx="1110" cy="36" r="5.5" fill="#ffd700"/>
+  </svg>
+
+  <div class="header-banner">
+    <h1 class="title-script">Happy Birthday</h1>
+    <div class="subtitle-name">✨ Trần Nguyễn Khánh Vi ✨</div>
+  </div>
+
+  <!-- Bánh kem 3 tầng lớn ở chính giữa, có số 19 và tên Khánh Vi -->
+  <div class="cake-backdrop">
+    <svg viewBox="0 0 460 410" width="100%" height="100%" preserveAspectRatio="xMidYMax meet" fill="none">
+      <defs>
+        <radialGradient id="cakeHalo" cx="50%" cy="54%" r="50%">
+          <stop offset="0%" stop-color="rgba(255, 225, 110, 0.62)"/>
+          <stop offset="55%" stop-color="rgba(255, 65, 95, 0.24)"/>
+          <stop offset="100%" stop-color="rgba(0, 0, 0, 0)"/>
+        </radialGradient>
+        <linearGradient id="tierRed" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#6e0418"/>
+          <stop offset="30%" stop-color="#d91136"/>
+          <stop offset="55%" stop-color="#ff2e55"/>
+          <stop offset="80%" stop-color="#b80b2b"/>
+          <stop offset="100%" stop-color="#5c0212"/>
+        </linearGradient>
+        <linearGradient id="tierGold" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#a86800"/>
+          <stop offset="30%" stop-color="#ffd700"/>
+          <stop offset="52%" stop-color="#fff7b2"/>
+          <stop offset="78%" stop-color="#f5a600"/>
+          <stop offset="100%" stop-color="#8c5400"/>
+        </linearGradient>
+        <linearGradient id="creamDrip" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ffffff"/>
+          <stop offset="100%" stop-color="#ffe7a3"/>
+        </linearGradient>
+      </defs>
+
+      <circle cx="230" cy="225" r="195" fill="url(#cakeHalo)"/>
+      <ellipse cx="230" cy="376" rx="185" ry="20" fill="url(#tierGold)" stroke="#fff8cc" stroke-width="2"/>
+      <ellipse cx="230" cy="372" rx="170" ry="13" fill="rgba(255,255,255,0.28)"/>
+      <path d="M198 388 L262 388 L276 410 L184 410 Z" fill="url(#tierGold)" stroke="#fff3b0" stroke-width="1.5"/>
+
+      <rect x="68" y="272" width="324" height="98" rx="16" fill="url(#tierRed)" stroke="#ffd700" stroke-width="2.5"/>
+      <path d="M68 286 Q92 312 116 288 Q140 314 164 288 Q188 312 212 288 Q230 310 248 288 Q272 314 296 288 Q320 312 344 288 Q368 310 392 286 L392 278 Q392 272 384 272 L76 272 Q68 272 68 278 Z" fill="url(#creamDrip)"/>
+      <circle cx="92" cy="362" r="5" fill="#fff3b0"/><circle cx="120" cy="362" r="5" fill="#ffd700"/><circle cx="148" cy="362" r="5" fill="#fff3b0"/>
+      <circle cx="230" cy="362" r="5.5" fill="#ffd700"/>
+      <circle cx="312" cy="362" r="5" fill="#fff3b0"/><circle cx="340" cy="362" r="5" fill="#ffd700"/><circle cx="368" cy="362" r="5" fill="#fff3b0"/>
+
+      <rect x="136" y="314" width="188" height="36" rx="18" fill="#520210" stroke="#ffd700" stroke-width="2.5"/>
+      <rect x="140" y="318" width="180" height="28" rx="14" fill="none" stroke="rgba(255,245,180,0.55)" stroke-width="1"/>
+      <text x="230" y="338" font-family="'Montserrat', sans-serif" font-weight="800" font-size="18" letter-spacing="1.2" fill="#fff7bd" text-anchor="middle">✦ KHÁNH VI ✦</text>
+
+      <rect x="112" y="188" width="236" height="84" rx="14" fill="url(#tierGold)" stroke="#fff7c2" stroke-width="2.5"/>
+      <rect x="112" y="224" width="236" height="16" fill="#9e0822" opacity="0.9"/>
+      <path d="M112 200 Q136 222 160 200 Q184 224 208 200 Q230 222 252 200 Q276 224 300 200 Q324 222 348 200 L348 194 Q348 188 340 188 L120 188 Q112 188 112 194 Z" fill="url(#creamDrip)"/>
+      <circle cx="230" cy="233" r="26" fill="#7a041a" stroke="#fff3a8" stroke-width="3"/>
+      <text x="230" y="242" font-family="'Montserrat', sans-serif" font-weight="800" font-size="25" fill="#fff8c4" text-anchor="middle">19</text>
+
+      <rect x="156" y="116" width="148" height="72" rx="12" fill="url(#tierRed)" stroke="#ffd700" stroke-width="2.5"/>
+      <path d="M156 127 Q176 146 196 127 Q214 146 230 127 Q246 146 264 127 Q284 146 304 127 L304 122 Q304 116 296 116 L164 116 Q156 116 156 122 Z" fill="url(#creamDrip)"/>
+
+      <rect x="176" y="76" width="7" height="40" rx="3" fill="#fff6cc" stroke="#ffd700" stroke-width="1.5"/>
+      <rect x="277" y="76" width="7" height="40" rx="3" fill="#fff6cc" stroke="#ffd700" stroke-width="1.5"/>
+      <text x="230" y="106" font-family="'Montserrat', sans-serif" font-weight="800" font-size="44" fill="url(#tierGold)" stroke="#ffffff" stroke-width="1.8" text-anchor="middle">19</text>
+
+      <!-- 2 ngọn lửa cố định trên 2 cây nến -->
+      <g>
+        <circle cx="179.5" cy="64" r="11" fill="rgba(255,215,0,0.4)"/>
+        <path d="M179.5 52 C174 62, 175 72, 179.5 72 C184 72, 185 62, 179.5 52 Z" fill="#ffbe0b"/>
+      </g>
+      <g>
+        <circle cx="280.5" cy="64" r="11" fill="rgba(255,215,0,0.4)"/>
+        <path d="M280.5 52 C275 62, 276 72, 280.5 72 C285 72, 286 62, 280.5 52 Z" fill="#ffbe0b"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Bong bóng bên TRÁI -->
+  <div class="decor-side decor-left">
+    <svg viewBox="0 0 230 650" width="100%" height="100%" preserveAspectRatio="xMinYMax meet" fill="none">
+      <g class="balloon-float">
+        <path d="M62 175 Q52 380 85 615" stroke="rgba(255,220,120,0.72)" stroke-width="1.6"/>
+        <path d="M138 228 Q115 410 85 615" stroke="rgba(255,220,120,0.72)" stroke-width="1.6"/>
+        <path d="M52 315 Q62 465 85 615" stroke="rgba(255,220,120,0.72)" stroke-width="1.6"/>
+        <path d="M126 355 Q105 485 85 615" stroke="rgba(255,220,120,0.72)" stroke-width="1.6"/>
+
+        <ellipse cx="62" cy="115" rx="48" ry="60" fill="#d90429"/><polygon points="62,175 55,184 69,184" fill="#8f021b"/>
+        <ellipse cx="45" cy="92" rx="10" ry="20" transform="rotate(-22 45 92)" fill="rgba(255,255,255,0.35)"/>
+
+        <ellipse cx="138" cy="175" rx="42" ry="52" fill="#ffd700"/><polygon points="138,227 132,235 144,235" fill="#9e6200"/>
+        <ellipse cx="123" cy="155" rx="8" ry="16" transform="rotate(-20 123 155)" fill="rgba(255,255,255,0.48)"/>
+
+        <ellipse cx="52" cy="265" rx="40" ry="50" fill="rgba(255,225,130,0.28)" stroke="#ffd700" stroke-width="1.5"/>
+        <polygon points="52,315 46,323 58,323" fill="#d49b00"/>
+
+        <ellipse cx="126" cy="312" rx="34" ry="42" fill="#b80d2d"/>
+        <polygon points="126,354 121,361 131,361" fill="#6b0013"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Bong bóng bên PHẢI -->
+  <div class="decor-side decor-right">
+    <svg viewBox="0 0 230 650" width="100%" height="100%" preserveAspectRatio="xMinYMax meet" fill="none">
+      <g class="balloon-float">
+        <path d="M62 175 Q52 380 85 615" stroke="rgba(255,220,120,0.72)" stroke-width="1.6"/>
+        <path d="M138 228 Q115 410 85 615" stroke="rgba(255,220,120,0.72)" stroke-width="1.6"/>
+        <path d="M52 315 Q62 465 85 615" stroke="rgba(255,220,120,0.72)" stroke-width="1.6"/>
+        <path d="M126 355 Q105 485 85 615" stroke="rgba(255,220,120,0.72)" stroke-width="1.6"/>
+
+        <ellipse cx="62" cy="115" rx="48" ry="60" fill="#ffd700"/><polygon points="62,175 55,184 69,184" fill="#9e6200"/>
+        <ellipse cx="45" cy="92" rx="10" ry="20" transform="rotate(-22 45 92)" fill="rgba(255,255,255,0.48)"/>
+
+        <ellipse cx="138" cy="175" rx="42" ry="52" fill="#d90429"/><polygon points="138,227 132,235 144,235" fill="#8f021b"/>
+        <ellipse cx="123" cy="155" rx="8" ry="16" transform="rotate(-20 123 155)" fill="rgba(255,255,255,0.35)"/>
+
+        <ellipse cx="52" cy="265" rx="40" ry="50" fill="rgba(255,225,130,0.28)" stroke="#ffd700" stroke-width="1.5"/>
+        <polygon points="52,315 46,323 58,323" fill="#d49b00"/>
+
+        <ellipse cx="126" cy="312" rx="34" ry="42" fill="#e09f00"/>
+        <polygon points="126,354 121,361 131,361" fill="#7a4900"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Cụm hộp quà to và rực sáng bên TRÁI -->
+  <div class="gifts-corner gifts-left">
+    <svg viewBox="0 0 320 240" width="100%" height="100%" preserveAspectRatio="xMinYMax meet" fill="none">
+      <defs>
+        <radialGradient id="giftAuraL" cx="45%" cy="60%" r="55%">
+          <stop offset="0%" stop-color="rgba(255, 225, 100, 0.58)"/>
+          <stop offset="100%" stop-color="rgba(0, 0, 0, 0)"/>
+        </radialGradient>
+        <linearGradient id="gRedL" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#ff2a55"/><stop offset="100%" stop-color="#990620"/>
+        </linearGradient>
+        <linearGradient id="gGoldL" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fff49c"/><stop offset="50%" stop-color="#ffd000"/><stop offset="100%" stop-color="#c97a00"/>
+        </linearGradient>
+      </defs>
+      <circle cx="145" cy="145" r="125" fill="url(#giftAuraL)"/>
+      <rect x="18" y="88" width="124" height="145" rx="10" fill="url(#gRedL)" stroke="#fff29c" stroke-width="3"/>
+      <rect x="68" y="88" width="24" height="145" fill="url(#gGoldL)"/>
+      <rect x="12" y="68" width="136" height="24" rx="6" fill="#ff1e47" stroke="#fff6b3" stroke-width="2.5"/>
+      <path d="M80 68 C48 32, 24 58, 72 68 M80 68 C112 32, 136 58, 88 68" stroke="#fff3a1" stroke-width="6" fill="none"/>
+
+      <rect x="122" y="128" width="98" height="105" rx="8" fill="url(#gGoldL)" stroke="#ffffff" stroke-width="2.5"/>
+      <rect x="162" y="128" width="18" height="105" fill="#d90429"/>
+      <rect x="116" y="112" width="110" height="20" rx="5" fill="#ffe64d" stroke="#ffffff" stroke-width="2"/>
+      <path d="M171 112 C148 84, 130 104, 165 112 M171 112 C194 84, 212 104, 177 112" stroke="#d90429" stroke-width="5" fill="none"/>
+
+      <rect x="82" y="168" width="66" height="65" rx="6" fill="#c91032" stroke="#fff5b8" stroke-width="2"/>
+      <rect x="109" y="168" width="12" height="65" fill="#ffd700"/>
+      <circle cx="52" cy="48" r="4" fill="#fff"/><circle cx="195" cy="78" r="4.5" fill="#fff3a1"/><circle cx="242" cy="145" r="3.5" fill="#ffd700"/>
+    </svg>
+  </div>
+
+  <!-- Cụm hộp quà to và rực sáng bên PHẢI -->
+  <div class="gifts-corner gifts-right">
+    <svg viewBox="0 0 320 240" width="100%" height="100%" preserveAspectRatio="xMinYMax meet" fill="none">
+      <circle cx="145" cy="145" r="125" fill="url(#giftAuraL)"/>
+      <rect x="18" y="88" width="124" height="145" rx="10" fill="url(#gRedL)" stroke="#fff29c" stroke-width="3"/>
+      <rect x="68" y="88" width="24" height="145" fill="url(#gGoldL)"/>
+      <rect x="12" y="68" width="136" height="24" rx="6" fill="#ff1e47" stroke="#fff6b3" stroke-width="2.5"/>
+      <path d="M80 68 C48 32, 24 58, 72 68 M80 68 C112 32, 136 58, 88 68" stroke="#fff3a1" stroke-width="6" fill="none"/>
+
+      <rect x="122" y="128" width="98" height="105" rx="8" fill="url(#gGoldL)" stroke="#ffffff" stroke-width="2.5"/>
+      <rect x="162" y="128" width="18" height="105" fill="#d90429"/>
+      <rect x="116" y="112" width="110" height="20" rx="5" fill="#ffe64d" stroke="#ffffff" stroke-width="2"/>
+      <path d="M171 112 C148 84, 130 104, 165 112 M171 112 C194 84, 212 104, 177 112" stroke="#d90429" stroke-width="5" fill="none"/>
+
+      <rect x="82" y="168" width="66" height="65" rx="6" fill="#c91032" stroke="#fff5b8" stroke-width="2"/>
+      <rect x="109" y="168" width="12" height="65" fill="#ffd700"/>
+      <circle cx="52" cy="48" r="4" fill="#fff"/><circle cx="195" cy="78" r="4.5" fill="#fff3a1"/><circle cx="242" cy="145" r="3.5" fill="#ffd700"/>
+    </svg>
+  </div>
+
+  <div class="stage-3d"><div class="world-3d" id="world-3d"></div></div>
+
+  <script>
+    var cardOpened = false;
+    function openCard() {
+      if (cardOpened) return;
+      cardOpened = true;
+      var ov = document.getElementById('welcome-overlay');
+      ov.style.pointerEvents = 'none';
+      ov.style.opacity = '0';
+      setTimeout(function () { ov.style.display = 'none'; }, 400);
+      var music = document.getElementById('bg-music');
+      if (music) music.play().catch(function () {});
+      triggerGrandSalvo();
+    }
+
+    function createFallbackPhoto() {
+      var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="360" height="460" viewBox="0 0 360 460"><rect width="360" height="460" fill="#6b0013"/><text x="180" y="218" font-size="84" text-anchor="middle">🎂</text><text x="180" y="340" font-family="Georgia,serif" font-weight="bold" font-size="22" fill="#fff2b2" text-anchor="middle">Khánh Vi - Tuổi 19</text></svg>';
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
+
+    var GREETING_CARDS = [
+      { tag: 'Gửi Bí Thư', icon: '🥳', text: 'Chúc bí thư tuổi mới vui vẻ nghen 🥳' },
+      { tag: 'Tuổi 19 Rực Rỡ', icon: '🎓', text: 'Đạt được nhiều thành công với tuổi 19 nha' },
+      { tag: 'Happy Birthday', icon: '💖', text: 'Luôn vui vẻ và hạnh phúc nữa nè' },
+      { tag: 'May Mắn', icon: '🍀', text: 'Gặp nhiều may mắn trong tuổi mới' },
+      { tag: 'Khánh Vi 19+', icon: '🎂', text: 'Chúc mừng sinh nhật Trần Nguyễn Khánh Vi!' },
+      { tag: 'Tỏa Sáng', icon: '👑', text: 'Tuổi 19 thật rực rỡ và tỏa sáng nhé!' },
+      { tag: 'Gánh Lớp', icon: '😘', text: 'Chúc bí thư lúc nào cũng đủ sức gánh lớp nha 😘' },
+      { tag: 'Thành Công', icon: '✨', text: 'Mọi dự định tuổi 19 đều thành hiện thực' },
+      { tag: 'Bình An', icon: '🎁', text: 'Luôn vui vẻ, hạnh phúc và gặp nhiều may mắn' }
+    ];
+
+    var world3D = document.getElementById('world-3d');
+    var CARD_COUNT = 10, cards = [];
+    var spatialSlots = [
+      { x: 0, y: -42, z: 270, rotY: 0, rotZ: 0 },
+      { x: -245, y: -75, z: 120, rotY: 22, rotZ: -4 },
+      { x: 245, y: -70, z: 120, rotY: -22, rotZ: 4 },
+      { x: -370, y: 15, z: -40, rotY: 32, rotZ: -6 },
+      { x: 370, y: 15, z: -40, rotY: -32, rotZ: 6 },
+      { x: -165, y: 55, z: 20, rotY: 14, rotZ: -2 },
+      { x: 165, y: 55, z: 20, rotY: -14, rotZ: 2 },
+      { x: -230, y: -145, z: -190, rotY: 18, rotZ: 3 },
+      { x: 230, y: -145, z: -190, rotY: -18, rotZ: -3 },
+      { x: 0, y: -130, z: -260, rotY: 0, rotZ: 0 }
+    ];
+
+    for (var i = 0; i < CARD_COUNT; i++) {
+      var el = document.createElement('div');
+      el.className = 'photo-card';
+      if (i === 0) {
+        el.innerHTML = '<div class="photo-inner"><img src="1.jpg" alt="Khánh Vi" /><div class="card-caption">Trần Nguyễn Khánh Vi ✨</div></div>';
+        var imgEl = el.querySelector('img');
+        var altIdx = 0, altNames = ['1.png', '1.jpeg', '1.JPG', '1.PNG'];
+        imgEl.onerror = function () {
+          if (altIdx < altNames.length) this.src = altNames[altIdx++];
+          else { this.onerror = null; this.src = createFallbackPhoto(); }
+        };
+      } else {
+        var gc = GREETING_CARDS[(i - 1) % GREETING_CARDS.length];
+        el.innerHTML = '<div class="wish-card-inner"><div class="wc-tag">✦ ' + gc.tag + ' ✦</div><div class="wc-icon">' + gc.icon + '</div><div class="wc-text">' + gc.text + '</div><div class="wc-footer">— Happy Birthday —</div></div>';
+      }
+      var s = spatialSlots[i];
+      var cardObj = {
+        index: i, el: el, slotIndex: i, x: s.x, y: s.y, z: s.z,
+        rotY: s.rotY, rotZ: s.rotZ, phaseZ: (i * Math.PI * 2) / CARD_COUNT,
+        phaseY: i * 1.1, speedZ: 1.45 + (i % 3) * 0.25
+      };
+      (function (obj) {
+        el.addEventListener('click', function () {
+          var front = cards.find(function (c) { return c.slotIndex === 0; });
+          if (front && front !== obj) {
+            var t = obj.slotIndex; obj.slotIndex = 0; front.slotIndex = t;
+          }
+          triggerGentleSalvo(window.innerWidth * 0.5, window.innerHeight * 0.28);
+        });
+      })(cardObj);
+      world3D.appendChild(el);
+      cards.push(cardObj);
+    }
+
+    setInterval(function () {
+      var idx = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+      for (var i = idx.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = idx[i]; idx[i] = idx[j]; idx[j] = tmp;
+      }
+      var oldFront = cards.find(function (c) { return c.slotIndex === 0; });
+      cards.forEach(function (c, k) { c.slotIndex = idx[k]; });
+      if (oldFront && oldFront.slotIndex === 0) {
+        var other = cards.find(function (c) { return c !== oldFront; });
+        other.slotIndex = 0; oldFront.slotIndex = idx[other.index];
+      }
+    }, 3400);
+
+    var bgCanvas = document.getElementById('bg-canvas'), bgCtx = bgCanvas.getContext('2d');
+    var fwCanvas = document.getElementById('fireworks-canvas'), fwCtx = fwCanvas.getContext('2d');
+    var W = bgCanvas.width = fwCanvas.width = window.innerWidth;
+    var H = bgCanvas.height = fwCanvas.height = window.innerHeight;
+
+    var bokeh = [], notes = ['♪', '♫', '✦', '✧'];
+    for (var b = 0; b < 50; b++) {
+      bokeh.push({
+        x: Math.random() * W, y: Math.random() * H, r: 5 + Math.random() * 16,
+        vy: -(0.3 + Math.random() * 0.65), vx: (Math.random() - 0.5) * 0.3,
+        phase: Math.random() * 6.28, alpha: 0.22 + Math.random() * 0.5,
+        isNote: b % 6 === 0, sym: notes[b % 4], hue: b % 3 === 0 ? 345 : 44
+      });
+    }
+
+    /* Pháo hoa nở chậm, tỏa vòng rộng, sáng rõ và có 1 đợt pháo lớn mỗi 6 giây */
+    var rockets = [], sparks = [], flashes = [];
+    var PALETTES = [
+      ['#fff6cc', '#ffd700', '#ffaa00'],
+      ['#ffd9e0', '#ff3b6f', '#ffba49'],
+      ['#fff0ad', '#ff5983', '#ffe033']
+    ];
+
+    function explode(x, y, pal, sc) {
+      flashes.push({ x: x, y: y, r: 145 * sc, alpha: Math.min(0.22, 0.17 * sc) });
+      var count = Math.floor(92 * sc);
+      for (var i = 0; i < count; i++) {
+        var ang = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.08;
+        var spd = (1.15 + Math.random() * 2.05) * sc;
+        sparks.push({
+          x: x, y: y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+          color: pal[i % pal.length], alpha: 0.84, decay: 0.0066 + Math.random() * 0.003,
+          size: 1.95 * sc, phase: Math.random() * 10, hist: []
+        });
+      }
+    }
+
+    function launchRocket(rx, ty, pal, sc) {
+      rockets.push({
+        x: rx, y: H + 10, ty: ty, vx: (Math.random() - 0.5) * 0.85,
+        vy: -(Math.sqrt(2 * 0.068 * (H - ty)) + 0.85), pal: pal, sc: sc, trail: []
+      });
+    }
+
+    function triggerGentleSalvo(cx, by) {
+      [-260, -90, 90, 260].forEach(function (dx, idx) {
+        setTimeout(function () {
+          var rx = Math.max(90, Math.min(W - 90, cx + dx * (W / 1200)));
+          var ty = Math.max(95, by + (Math.random() - 0.5) * 75);
+          launchRocket(rx, ty, PALETTES[idx % PALETTES.length], 0.98);
+        }, idx * 320);
+      });
+    }
+
+    /* Đợt pháo lớn mỗi 6 giây: 6 quả cỡ lớn bắn thành vòng cung đều khắp bầu trời */
+    function triggerGrandSalvo() {
+      var salvoPlan = [
+        { xRatio: 0.12, yRatio: 0.24, sc: 1.15, delay: 0 },
+        { xRatio: 0.88, yRatio: 0.24, sc: 1.15, delay: 140 },
+        { xRatio: 0.28, yRatio: 0.18, sc: 1.22, delay: 320 },
+        { xRatio: 0.72, yRatio: 0.18, sc: 1.22, delay: 460 },
+        { xRatio: 0.43, yRatio: 0.14, sc: 1.28, delay: 680 },
+        { xRatio: 0.57, yRatio: 0.14, sc: 1.28, delay: 820 }
+      ];
+      salvoPlan.forEach(function (item, idx) {
+        setTimeout(function () {
+          var rx = W * item.xRatio + (Math.random() - 0.5) * 24;
+          var ty = Math.max(85, H * item.yRatio + (Math.random() - 0.5) * 20);
+          launchRocket(rx, ty, PALETTES[idx % PALETTES.length], item.sc);
+        }, item.delay);
+      });
+    }
+
+    /* Pháo nền bắn đều nhẹ nhàng */
+    setInterval(function () {
+      if (rockets.length >= 6) return;
+      var zone = Math.random();
+      var rx1 = zone < 0.42
+        ? W * (0.11 + Math.random() * 0.24)
+        : (zone < 0.84 ? W * (0.65 + Math.random() * 0.24) : W * (0.38 + Math.random() * 0.24));
+      var ty1 = H * (0.14 + Math.random() * 0.16);
+      launchRocket(rx1, ty1, PALETTES[Math.floor(Math.random() * PALETTES.length)], 0.95);
+
+      if (Math.random() < 0.55) {
+        setTimeout(function () {
+          if (rockets.length >= 7) return;
+          var rx2 = rx1 < W * 0.5
+            ? W * (0.62 + Math.random() * 0.25)
+            : W * (0.13 + Math.random() * 0.25);
+          var ty2 = H * (0.15 + Math.random() * 0.16);
+          launchRocket(rx2, ty2, PALETTES[Math.floor(Math.random() * PALETTES.length)], 0.92);
+        }, 440);
+      }
+    }, 1250);
+
+    /* Cứ mỗi 6 giây bắn 1 đợt pháo lớn */
+    setInterval(triggerGrandSalvo, 6000);
+
+    function animate(now) {
+      var t = now * 0.001, k = W < 768 ? 0.56 : 1;
+      bgCtx.clearRect(0, 0, W, H);
+      for (var i = 0; i < bokeh.length; i++) {
+        var p = bokeh[i];
+        p.y += p.vy; p.x += p.vx + Math.sin(t + p.phase) * 0.25;
+        if (p.y < -30) { p.y = H + 30; p.x = Math.random() * W; }
+        var a = p.alpha * (0.55 + 0.45 * Math.sin(t * 3 + p.phase));
+        if (p.isNote) {
+          bgCtx.font = '18px serif';
+          bgCtx.fillStyle = 'hsla(' + p.hue + ',100%,75%,' + a + ')';
+          bgCtx.fillText(p.sym, p.x, p.y);
+        } else {
+          var g = bgCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
+          g.addColorStop(0, 'hsla(' + p.hue + ',100%,72%,' + a + ')');
+          g.addColorStop(1, 'rgba(0,0,0,0)');
+          bgCtx.fillStyle = g; bgCtx.beginPath(); bgCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2); bgCtx.fill();
+        }
+      }
+
+      fwCtx.globalCompositeOperation = 'source-over';
+      fwCtx.fillStyle = 'rgba(0,0,0,0.23)'; fwCtx.fillRect(0, 0, W, H);
+      fwCtx.globalCompositeOperation = 'lighter';
+
+      for (var fIdx = flashes.length - 1; fIdx >= 0; fIdx--) {
+        var f = flashes[fIdx];
+        var fg = fwCtx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
+        fg.addColorStop(0, 'rgba(255,240,185,' + f.alpha + ')'); fg.addColorStop(1, 'rgba(0,0,0,0)');
+        fwCtx.fillStyle = fg; fwCtx.beginPath(); fwCtx.arc(f.x, f.y, f.r, 0, Math.PI * 2); fwCtx.fill();
+        if ((f.alpha -= 0.018) <= 0) flashes.splice(fIdx, 1);
+      }
+
+      for (var rIdx = rockets.length - 1; rIdx >= 0; rIdx--) {
+        var r = rockets[rIdx];
+        r.trail.push({ x: r.x, y: r.y }); if (r.trail.length > 8) r.trail.shift();
+        r.x += r.vx; r.y += r.vy; r.vy += 0.068;
+        for (var j = 0; j < r.trail.length; j++) {
+          fwCtx.fillStyle = 'rgba(255,225,135,' + ((j / r.trail.length) * 0.62) + ')';
+          fwCtx.beginPath(); fwCtx.arc(r.trail[j].x, r.trail[j].y, 2.0 * Math.min(1.25, r.sc), 0, Math.PI * 2); fwCtx.fill();
+        }
+        if (r.vy >= -0.9 || r.y <= r.ty) { explode(r.x, r.y, r.pal, r.sc); rockets.splice(rIdx, 1); }
+      }
+
+      for (var sIdx = sparks.length - 1; sIdx >= 0; sIdx--) {
+        var s = sparks[sIdx];
+        s.hist.push({ x: s.x, y: s.y }); if (s.hist.length > 8) s.hist.shift();
+        s.vx *= 0.975; s.vy = s.vy * 0.975 + 0.022; s.x += s.vx; s.y += s.vy; s.alpha -= s.decay;
+        if (s.alpha <= 0.02) { sparks.splice(sIdx, 1); continue; }
+        fwCtx.globalAlpha = Math.max(0, s.alpha * (0.72 + 0.28 * Math.sin(t * 12 + s.phase)));
+        if (s.hist.length > 1) {
+          fwCtx.strokeStyle = s.color; fwCtx.lineWidth = s.size;
+          fwCtx.beginPath(); fwCtx.moveTo(s.hist[0].x, s.hist[0].y);
+          for (var h = 1; h < s.hist.length; h++) fwCtx.lineTo(s.hist[h].x, s.hist[h].y);
+          fwCtx.stroke();
+        }
+        fwCtx.fillStyle = 'rgba(255,252,225,0.88)'; fwCtx.beginPath(); fwCtx.arc(s.x, s.y, s.size * 0.55, 0, Math.PI * 2); fwCtx.fill();
+      }
+      fwCtx.globalAlpha = 1;
+
+      for (var cIdx = 0; cIdx < cards.length; cIdx++) {
+        var c = cards[cIdx], tgt = spatialSlots[c.slotIndex];
+        c.x += (tgt.x * k - c.x) * 0.045; c.y += (tgt.y * k - c.y) * 0.045; c.z += (tgt.z * k - c.z) * 0.045;
+        c.rotY += (tgt.rotY - c.rotY) * 0.045; c.rotZ += (tgt.rotZ - c.rotZ) * 0.045;
+        var fz = c.z + Math.sin(t * c.speedZ + c.phaseZ) * (95 * k);
+        var wy = Math.cos(t * 1.3 + c.phaseY) * 10;
+        c.el.style.zIndex = Math.round(fz + 500);
+        c.el.style.opacity = Math.max(0.45, Math.min(1, (fz + 380) / 680)).toFixed(2);
+        c.el.style.transform = 'translate3d(' + c.x.toFixed(1) + 'px,' + (c.y + wy).toFixed(1) + 'px,' + fz.toFixed(1) + 'px) rotateY(' + c.rotY.toFixed(1) + 'deg) rotateZ(' + c.rotZ.toFixed(1) + 'deg)';
+      }
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    window.addEventListener('resize', function () {
+      W = bgCanvas.width = fwCanvas.width = window.innerWidth;
+      H = bgCanvas.height = fwCanvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>
